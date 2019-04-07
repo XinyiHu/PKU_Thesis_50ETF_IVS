@@ -573,7 +573,7 @@ ylim([0,5]);
 s = 800;
 
 % VAR Estimate
-% Poly21
+% Poly21 in sample
 numseries = 5;
 LinearParamArray = table2array(LinearParams_21(1:s,{'P00','P10','P01','P20','P11'}));
 for p=1:10
@@ -587,16 +587,30 @@ p=2;
 LinearMdl = varm(numseries, p);
 [LinearEstMdl,LinearEstSE,LinearlogL,LinearInsampleResidual] = estimate(LinearMdl, LinearParamArray);
 %summarize(EstMdl);
-LinearInsampleResidual = abs(LinearInsampleResidual);
-LinearInsampleResidualNaive = abs(LinearParamArray(2:799,:) - LinearParamArray(3:800,:));
-plot(LinearInsampleResidual(:,1),'LineWidth',1);
-hold on
-plot(LinearInsampleResidualNaive(:,1),'LineWidth',0.5);
-legend({'VAR','Naive'});
-ylabel('p00')
-ylim([0,20]);
+LinearInsampleError = abs(LinearInsampleResidual);
+LinearInsampleRelativeError = LinearInsampleError ./ abs(LinearParamArray(3:800,:));
+NaiveInsampleError = abs(LinearParamArray(2:799,:) - LinearParamArray(3:800,:));
+NaiveInsampleRelativeError = NaiveInsampleError ./ abs(LinearParamArray(3:800,:));
+mean(LinearInsampleError)
+mean(NaiveInsampleError)
 
-% Heston
+% Poly21 out of sample
+c = LinearEstMdl.Constant;
+A1 = cell2mat(LinearEstMdl.AR(1));
+A2 = cell2mat(LinearEstMdl.AR(2)); 
+LinearParamArrayO = table2array(LinearParams_21(s-1:end,{'P00','P10','P01','P20','P11'}));
+LinearOutsampleMV = c' + LinearParamArrayO(1:181,:) * A1' + LinearParamArrayO(2:182,:) * A2';
+LinearOutsampleError = abs(LinearOutsampleMV - LinearParamArrayO(3:end,:));
+LinearOutsampleRelativeError = LinearOutsampleError ./ abs(LinearParamArrayO(3:end,:));
+
+NaiveOutsampleError = abs(LinearParamArrayO(2:182,:) - LinearParamArrayO(3:end,:));
+NaiveOutsampleRelativeError = NaiveOutsampleError ./ abs(LinearParamArrayO(3:end,:));
+
+mean(LinearOutsampleError)
+mean(NaiveOutsampleError)
+
+
+% Heston in sample
 numseries = 5;
 HestonParamArray = table2array(HestonParams(1:s,{'v0','theta','rho','kappa','sigma'}));
 for p=1:10
@@ -610,12 +624,30 @@ p=7;
 HestonMdl = varm(numseries, p);
 [HestonEstMdl,HestonEstSE,HestonlogL,HestonInsampleResidual] = estimate(HestonMdl, HestonParamArray);
 %summarize(EstMdl);
-HestonInsampleResidual = abs(HestonInsampleResidual);
-HestonInsampleResidualNaive = abs(HestonParamArray(7:799,:) - HestonParamArray(8:800,:));
-plot(HestonInsampleResidual(:,1),'LineWidth',1);
-hold on
-plot(HestonInsampleResidualNaive(:,1),'LineWidth',0.5);
-legend({'VAR','Naive'});
-ylim([0,10]);
+HestonInsampleError = abs(HestonInsampleResidual);
+HestonInsampleRelativeError = HestonInsampleError ./ abs(HestonParamArray(8:800,:));
+NaiveInsampleError = abs(HestonParamArray(7:799,:) - HestonParamArray(8:800,:));
+NaiveInsampleRelativeError = NaiveInsampleError ./ abs(HestonParamArray(8:800,:));
+mean(HestonInsampleError)
+mean(NaiveInsampleError)
 
+% Poly21 out of sample
+c = HestonEstMdl.Constant;
+A1 = cell2mat(HestonEstMdl.AR(1));
+A2 = cell2mat(HestonEstMdl.AR(2)); 
+A3 = cell2mat(HestonEstMdl.AR(3));
+A4 = cell2mat(HestonEstMdl.AR(4)); 
+A5 = cell2mat(HestonEstMdl.AR(5));
+A6 = cell2mat(HestonEstMdl.AR(6)); 
+A7 = cell2mat(HestonEstMdl.AR(7)); 
 
+HestonParamArrayO = table2array(HestonParams(s-6:end,{'v0','theta','rho','kappa','sigma'}));
+HestonOutsampleMV = c' + HestonParamArrayO(1:181,:) * A1' + HestonParamArrayO(2:182,:) * A2' + HestonParamArrayO(3:183,:) * A3' + HestonParamArrayO(4:184,:) * A4' + HestonParamArrayO(5:185,:) * A5' + HestonParamArrayO(6:186,:) * A6' + HestonParamArrayO(7:187,:) * A7';
+HestonOutsampleError = abs(HestonOutsampleMV - HestonParamArrayO(8:end,:));
+HestonOutsampleRelativeError = HestonOutsampleError ./ abs(HestonParamArrayO(8:end,:));
+
+NaiveOutsampleError = abs(HestonParamArrayO(7:187,:) - HestonParamArrayO(8:end,:));
+NaiveOutsampleRelativeError = NaiveOutsampleError ./ abs(HestonParamArrayO(8:end,:));
+
+mean(HestonOutsampleError)
+mean(NaiveOutsampleError)
